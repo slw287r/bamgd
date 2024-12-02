@@ -292,6 +292,7 @@ void kde_plot(double *x, double *y, int n, const dm_t *dm, bool log, const char 
 	// Visualization canvas
 	double width = points, height = points;
 	double margin = 64, n_level = 10;
+	setenv("FONTCONFIG_PATH", "/etc/fonts", 1);
 	cairo_surface_t *surface = cairo_image_surface_create(CAIRO_FORMAT_ARGB32,
 			width + 2 * margin, height + 2 * margin);
 	cairo_t *cr = cairo_create(surface);
