@@ -184,8 +184,7 @@ void draw_ticks(cairo_t *cr, double *grid_x, double *grid_y, int grid_size,
 		snprintf(label, sizeof(label), "%.*f", prec, y);
 		cairo_set_source_rgb(cr, 0, 0, 0);
 		cairo_text_extents(cr, label, &ext);
-		printf("%f\t%f\n", -m_w * 2, -ext.width - ext.x_bearing - ext.height / 2);
-		cairo_move_to(cr, fmax(-m_w * 2, -ext.width - ext.x_bearing - ext.height / 2), height - y_pos + ext.height / 2); // Adjust position for better alignment
+		cairo_move_to(cr, fmax(-m_w * 5, -ext.width - ext.x_bearing - ext.height / 2), height - y_pos + ext.height / 2); // Adjust position for better alignment
 		cairo_show_text(cr, label);
 	}
 }
