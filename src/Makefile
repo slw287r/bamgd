@@ -16,7 +16,7 @@ bamgd: $(OBJS)
 	$(CC) $(CFLAGS) -o $@ $^ $(LIBS)
 
 test: bamgd
-	./$^ -i ../dat/573.bam -o ../dat/573.png -r ../dat/573.fa.gz
+	./$^ -i ../dat/573.bam -o ../dat/573.png -r ../dat/573.fa.gz -d
 
 clean:
 	rm -f bamgd *.o ../dat/573.png

@@ -13,23 +13,23 @@
 
 typedef struct
 {
-	double xmin, xmax, ymin, ymax;
+	double xmin, xmax, ymin, ymax, zmin, zmax;
 } dm_t;
 
 // Bivariate KDE function
 double gaussian_kernel(double u);
 void biv_kde(double *x, double *y, int n, double *grid_x, double *grid_y,
-		int grid_size, double *kde_values);
+		int grid_size, double *kde);
 // Univariate KDE function
-void univ_kde(double *data, int n, double *grid, int grid_size, double *kde_values,
+void univ_kde(double *data, int n, double *grid, int grid_size, double *kde,
 		double bandwidth, bool horiz);
 // Normalize KDE values for visualization
-void norm_kde_values(double *kde_values, int size, double *min_val, double *max_val);
+void norm_kde(double *kde, int size, double *min_val, double *max_val);
 // Draw filled univariate KDE
-void draw_filled_kde(cairo_t *cr, double *kde_values, double *grid, int grid_size,
+void draw_filled_kde(cairo_t *cr, double *kde, int col, double *grid, int grid_size,
 		int width, int height);
 // Draw contours with transparency
-void draw_contours(cairo_t *cr, double *kde_values, int grid_size, int width,
+void draw_contours(cairo_t *cr, double *kde, int col, int grid_size, int width,
 		int height, int n_level);
 // Round step size to a "nice" number
 double calculate_tick_step(double range);
@@ -43,4 +43,6 @@ void draw_right_ticks(cairo_t *cr, double *grid_x, double *grid_y, int grid_size
 // Draw axes for the main bivariate plot
 void draw_axes(cairo_t *cr, int width, int height);
 void draw_ylab(cairo_t *cr, const char *lab, double x, double canvas_height);
-void kde_plot(double *x, double *y, int n, const dm_t *dm, bool log, const char *png);
+void draw_legend(cairo_t *cr, int width, int margin);
+void kde_plot(double *x, double *y, double *z, int n, const dm_t *dm, bool log,
+		const char *png);

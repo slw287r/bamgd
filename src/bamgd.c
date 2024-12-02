@@ -14,9 +14,6 @@ int main(int argc, char *argv[])
 	cgranges_t *cr = cr_init();
 	faidx_t *fai = fai_load(arg->ref);
 	ld_cr(fai, arg->ctg, cr);
-	dm_t dm = {100, 0, MAXDP, 0};
-	double *gc = calloc(cr->n_r, sizeof(double));
-	double *dp = calloc(cr->n_r, sizeof(double));
 	/* dbg cr
 	for (i = 0; i < cr->n_r; ++i)
 	{
@@ -25,24 +22,46 @@ int main(int argc, char *argv[])
 		printf("%s\t%d\t%d\t%d\t%d\t%d\n", cr->ctg[r->x>>32].name, cr_st(r), cr_en(r), (int32_t)r->x, r->y, r->label);
 	}
 	*/
+	double *gc = calloc(cr->n_r, sizeof(double));
 	cr_gc(cr, fai, gc);
 	/* debug gc
 	for (i = 0; i < cr->n_r; ++i)
 		printf("%f\n", gc[i]);
 	*/
 	cr_index(cr); // index cr for overlapping, no merge is required for ref fai
-	ld_dp(arg, cr, dp);
-	// shrink dp and gc
-	for (i = 0; i < cr->n_r; ++i)
+	dm_t dm = {100, 0, MAXDP, 0, MAXDP, 0};
+	double *dp = NULL, *dd = NULL;
+	dp = calloc(cr->n_r, sizeof(double));
+	ld_dp(arg->in, arg->ctg, false, cr, dp);
+	if (arg->dup)
 	{
-		if (dp[i])
+		dd = calloc(cr->n_r, sizeof(double));
+		ld_dp(arg->in, arg->ctg, true, cr, dd);
+		for (i = 0; i < cr->n_r; ++i)
 		{
-			gc[j] = gc[i];
-			dp[j++] = dp[i];
+			if (dp[i])
+			{
+				gc[j] = gc[i];
+				dd[j] = dd[i];
+				dp[j++] = dp[i];
+			}
+		}
+	}
+	else
+	{
+		for (i = 0; i < cr->n_r; ++i)
+		{
+			if (dp[i])
+			{
+				gc[j] = gc[i];
+				dp[j++] = dp[i];
+			}
 		}
 	}
 	gc = realloc(gc, j * sizeof(double));
 	dp = realloc(dp, j * sizeof(double));
+	if (arg->dup)
+		dd = realloc(dd, j * sizeof(double));
 	double *dp_cp = calloc(j, sizeof(double));
 	memcpy(dp_cp, dp, j * sizeof(double));
 	gsl_sort(dp_cp, 1, j);
@@ -50,35 +69,72 @@ int main(int argc, char *argv[])
 	double upper = gsl_stats_quantile_from_sorted_data (dp_cp, 1, j, 0.95);
 	free(dp_cp);
 	//quantile filter of dp
-	for (i = 0; i < j; ++i)
+	if (arg->dup)
 	{
-		if (dp[i] >= lower && dp[i] <= upper)
+		for (i = 0; i < j; ++i)
 		{
-			dp[k] = dp[i];
-			gc[k++] = gc[i];
+			if (dp[i] >= lower && dp[i] <= upper)
+			{
+				dp[k] = dp[i];
+				dd[k] = dd[i];
+				gc[k++] = gc[i];
+			}
+		}
+		dp = realloc(dp, k * sizeof(double));
+		dd = realloc(dd, k * sizeof(double));
+		gc = realloc(gc, k * sizeof(double));
+		if (arg->log)
+		{
+			for (i = 0; i < k; ++i)
+			{
+				dp[i] = log10(dp[i]);
+				dd[i] = log10(dd[i]);
+			}
+		}
+		for (i = 0; i < k; ++i)
+		{
+			dm.xmin = fmin(dm.xmin, gc[i]);
+			dm.xmax = fmax(dm.xmax, gc[i]);
+			dm.ymin = fmin(dm.ymin, dp[i]);
+			dm.ymax = fmax(dm.ymax, dp[i]);
+			dm.zmin = fmin(dm.zmin, dd[i]);
+			dm.zmax = fmax(dm.zmax, dd[i]);
 		}
 	}
-	dp = realloc(dp, k * sizeof(double));
-	gc = realloc(gc, k * sizeof(double));
-	if (arg->log)
-		for (i = 0; i < k; ++i)
-			dp[i] = log10(dp[i]);
-	for (i = 0; i < k; ++i)
+	else
 	{
-		dm.xmin = fmin(dm.xmin, gc[i]);
-		dm.xmax = fmax(dm.xmax, gc[i]);
-		dm.ymin = fmin(dm.ymin, dp[i]);
-		dm.ymax = fmax(dm.ymax, dp[i]);
+		for (i = 0; i < j; ++i)
+		{
+			if (dp[i] >= lower && dp[i] <= upper)
+			{
+				dp[k] = dp[i];
+				gc[k++] = gc[i];
+			}
+		}
+		dp = realloc(dp, k * sizeof(double));
+		gc = realloc(gc, k * sizeof(double));
+		if (arg->log)
+			for (i = 0; i < k; ++i)
+				dp[i] = log10(dp[i]);
+		for (i = 0; i < k; ++i)
+		{
+			dm.xmin = fmin(dm.xmin, gc[i]);
+			dm.xmax = fmax(dm.xmax, gc[i]);
+			dm.ymin = fmin(dm.ymin, dp[i]);
+			dm.ymax = fmax(dm.ymax, dp[i]);
+		}
 	}
 	dm.ymin = arg->log ? 0.0 : 1.0;
 	//printf("%f\t%f\t%f\t%f\n", dm.xmin, dm.xmax, dm.ymin, dm.ymax);
-	kde_plot(gc, dp, k, &dm, arg->log, arg->out);
+	kde_plot(gc, dp, dd, k, &dm, arg->log, arg->out);
 	/* dbg gc~dp
 	for (i = 0; i < k; ++i)
 		printf("%f\t%f\n", gc[i], dp[i]);
 	*/
 	cr_destroy(cr);
 	free(dp);
+	if (arg->dup)
+		free(dd);
 	free(gc);
 	free(arg);
 	return 0;
@@ -106,24 +162,66 @@ int read_bam(void *data, bam1_t *b)
 	return ret;
 }
 
-void ld_dp(const arg_t *arg, const cgranges_t *cr, double *dp)
+int read_ddp_bam(void *data, bam1_t *b)
+{
+	aux_t *aux = (aux_t*)data;
+	int ret;
+	while (true)
+	{
+		ret = aux->iter ? sam_itr_next(aux->fp, aux->iter, b) : sam_read1(aux->fp, aux->hdr, b);
+		if (ret < 0)
+			break;
+		if (b->core.flag & (BAM_FUNMAP | BAM_FQCFAIL | BAM_FDUP | BAM_FSECONDARY | BAM_FSUPPLEMENTARY))
+			continue;
+		break;
+	}
+	return ret;
+}
+
+bool bam_has_dup(const char *fn)
+{
+	bool dup_mkd = false;
+	int tries = 0xFFFF;
+	samFile *fp = sam_open(fn, "r");
+	if (!fp)
+		error("Error: failed to read input bam [%s]\n", fn);
+	bam_hdr_t *h = sam_hdr_read(fp);
+	bam1_t *b = bam_init1();
+	bam1_core_t *c = &b->core;
+	while(sam_read1(fp, h, b) > 0)
+	{
+		if (c->flag & BAM_FDUP)
+		{
+			dup_mkd = true;
+			break;
+		}
+		if (!--tries)
+			break;
+	}
+	bam_destroy1(b);
+	bam_hdr_destroy(h);
+	hts_close(fp);
+	return dup_mkd;
+}
+
+void ld_dp(const char *in, const char *ctg, bool dup, const cgranges_t *cr, double *dp)
 {
 	int tid, pos, beg = 0, end = INT_MAX, n_plp, i;
 	int64_t m = 0, *b = 0, n_b = 0;
 	uint64_t *cov = calloc(cr->n_r, sizeof(uint64_t));
 	aux_t *data = calloc(1, sizeof(aux_t));
-	data->fp = hts_open(arg->in, "r");
+	data->fp = hts_open(in, "r");
 	data->hdr = sam_hdr_read(data->fp);
-	hts_idx_t *idx = sam_index_load(data->fp, arg->in);
-	if (arg->ctg)
+	hts_idx_t *idx = sam_index_load(data->fp, in);
+	if (ctg)
 	{
-		data->iter = sam_itr_querys(idx, data->hdr, arg->ctg);
+		data->iter = sam_itr_querys(idx, data->hdr, ctg);
 		beg = data->iter->beg;
 		end = data->iter->end;
 	}
 	hts_idx_destroy(idx);
 	bam_hdr_t *h = data->hdr;
-	bam_mplp_t mplp = bam_mplp_init(1, read_bam, (void**)&data);
+	bam_mplp_t mplp = bam_mplp_init(1, dup ? read_ddp_bam : read_bam, (void**)&data);
 	bam_mplp_set_maxcnt(mplp, MAXDP);
 	const bam_pileup1_t *plp = calloc(1, sizeof(bam_pileup1_t));
 	while (bam_mplp_auto(mplp, &tid, &pos, &n_plp, &plp) > 0)
@@ -276,7 +374,7 @@ void prs_arg(int argc, char **argv, arg_t *arg)
 {
 	int c = 0;
 	ketopt_t opt = KETOPT_INIT;
-	const char *opt_str = "i:o:s:r:c:lhv";
+	const char *opt_str = "i:o:s:r:c:ldhv";
 	while ((c = ketopt(&opt, argc, argv, 1, opt_str, long_options)) >= 0)
 	{
 		switch (c)
@@ -287,6 +385,7 @@ void prs_arg(int argc, char **argv, arg_t *arg)
 			case 'r': arg->ref = opt.arg; break;
 			case 'c': arg->ctg = opt.arg; break;
 			case 'l': arg->log = true; break;
+			case 'd': arg->dup = true; break;
 			case 'h': usage(); break;
 			case 'v':
 				if (strlen(BRANCH_COMMIT))
@@ -308,6 +407,12 @@ void prs_arg(int argc, char **argv, arg_t *arg)
 	snprintf(bai, PATH_MAX, "%s.bai", arg->in);
 	if (access(bai, R_OK))
 		error("Error: bam's index file (.bai) is required, please use samtools sort and index to create it.\n");
+	if (arg->dup && !bam_has_dup(arg->in))
+	{
+		arg->dup = false;
+		fprintf(stderr, INF " No dups are found in bam, `--dup' is turned off!\n");
+		fprintf(stderr, INF " Please mark dups in bam before applying `--dup'\n");
+	}
 	if (!arg->ref)
 	{
 		static char ref[PATH_MAX] = {'\0'};
@@ -442,7 +547,8 @@ void usage()
 	puts("  -o, --out \e[3mSTR\e[0m    Output GC~depth plot png \e[90m[${prefix}.png]\e[0m");
 	puts("  -r, --ref \e[3mSTR\e[0m    Reference fasta used in bam \e[90m[auto]\e[0m");
 	puts("  -c, --ctg \e[3mSTR\e[0m    Restrict plot to this contig \e[90m[none]\e[0m");
-	puts("  -l, --log \e[3mBOOL\e[0m   Depth in logscale \e[90m[false]\e[0m");
+	puts("  -l, --log \e[3mBOOL\e[0m   Logscale ultra-deep depth \e[90m[false]\e[0m");
+	puts("  -d, --dup \e[3mBOOL\e[0m   Separate depth w/o dups \e[90m[false]\e[0m");
 	putchar('\n');
 	puts("  -h               Show help message");
 	puts("  -v               Display program version");
