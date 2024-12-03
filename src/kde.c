@@ -317,27 +317,14 @@ void kde_plot(double *x, double *y, double *z, int n, const dm_t *dm, bool log,
 	int grid_size = points;
 	double grid_x[grid_size];
 	double grid_y[grid_size];
-	double grid_z[grid_size];
 	double kde_xy[grid_size * grid_size];
 	double kde_xz[grid_size * grid_size];
 	double kde_x[grid_size], kde_y[grid_size], kde_z[grid_size];
 	// Create grid points
-	if (z)
+	for (i = 0; i < grid_size; ++i)
 	{
-		for (i = 0; i < grid_size; ++i)
-		{
-			grid_x[i] = dm->xmin + i * (dm->xmax - dm->xmin) / (grid_size - 1);
-			grid_y[i] = dm->ymin + i * (dm->ymax - dm->ymin) / (grid_size - 1);
-			grid_z[i] = dm->zmin + i * (dm->zmax - dm->zmin) / (grid_size - 1);
-		}
-	}
-	else
-	{
-		for (i = 0; i < grid_size; ++i)
-		{
-			grid_x[i] = dm->xmin + i * (dm->xmax - dm->xmin) / (grid_size - 1);
-			grid_y[i] = dm->ymin + i * (dm->ymax - dm->ymin) / (grid_size - 1);
-		}
+		grid_x[i] = dm->xmin + i * (dm->xmax - dm->xmin) / (grid_size - 1);
+		grid_y[i] = dm->ymin + i * (dm->ymax - dm->ymin) / (grid_size - 1);
 	}
 	// Compute KDE
 	biv_kde(x, y, n, grid_x, grid_y, grid_size, kde_xy);
