@@ -29,14 +29,27 @@ int main(int argc, char *argv[])
 		printf("%f\n", gc[i]);
 	*/
 	cr_index(cr); // index cr for overlapping, no merge is required for ref fai
-	dm_t dm = {100, 0, MAXDP, 0, MAXDP, 0};
-	double *dp = NULL, *dd = NULL;
-	dp = calloc(cr->n_r, sizeof(double));
-	ld_dp(arg->in, arg->ctg, false, cr, dp);
+	dm_t dm = {100, 0, MAXDP, 0};
+	double *dp = NULL, *dd = NULL; // dep and dedup-ed dep
+	threadpool thpool = thpool_init(2);
+	op_t *p = calloc(2, sizeof(op_t));
+	p->in = (p + 1)->in = arg->in;
+	p->ctg = (p + 1)->ctg = arg->ctg;
+	p->cr = (p + 1)->cr = cr;
+	p->dedup = false;
+	p->dep = &dp;
+	thpool_add_work(thpool, ld_dp, (void *)(uintptr_t)p);
 	if (arg->dup)
 	{
-		dd = calloc(cr->n_r, sizeof(double));
-		ld_dp(arg->in, arg->ctg, true, cr, dd);
+		(p + 1)->dedup = true;
+		(p + 1)->dep = &dd;
+		thpool_add_work(thpool, ld_dp, (void *)(uintptr_t)(p + 1));
+	}
+	thpool_wait(thpool);
+	thpool_destroy(thpool);
+	free(p);
+	if (arg->dup)
+	{
 		for (i = 0; i < cr->n_r; ++i)
 		{
 			if (dp[i])
@@ -97,8 +110,6 @@ int main(int argc, char *argv[])
 			dm.xmax = fmax(dm.xmax, gc[i]);
 			dm.ymin = fmin(dm.ymin, dp[i]);
 			dm.ymax = fmax(dm.ymax, dp[i]);
-			dm.zmin = fmin(dm.zmin, dd[i]);
-			dm.zmax = fmax(dm.zmax, dd[i]);
 		}
 	}
 	else
@@ -204,8 +215,15 @@ bool bam_has_dup(const char *fn)
 	return dup_mkd;
 }
 
-void ld_dp(const char *in, const char *ctg, bool dup, const cgranges_t *cr, double *dp)
+void ld_dp(void *p_)
 {
+	op_t *p = (op_t *)p_;
+	char *in = p->in;
+	char *ctg = p->ctg;
+	bool dedup = p->dedup;
+	cgranges_t *cr = p->cr;
+	double **dp = p->dep;
+	*dp = calloc(cr->n_r, sizeof(double));
 	int tid, pos, beg = 0, end = INT_MAX, n_plp, i;
 	int64_t m = 0, *b = 0, n_b = 0;
 	uint64_t *cov = calloc(cr->n_r, sizeof(uint64_t));
@@ -221,7 +239,7 @@ void ld_dp(const char *in, const char *ctg, bool dup, const cgranges_t *cr, doub
 	}
 	hts_idx_destroy(idx);
 	bam_hdr_t *h = data->hdr;
-	bam_mplp_t mplp = bam_mplp_init(1, dup ? read_ddp_bam : read_bam, (void**)&data);
+	bam_mplp_t mplp = bam_mplp_init(1, dedup ? read_ddp_bam : read_bam, (void**)&data);
 	bam_mplp_set_maxcnt(mplp, MAXDP);
 	const bam_pileup1_t *plp = calloc(1, sizeof(bam_pileup1_t));
 	while (bam_mplp_auto(mplp, &tid, &pos, &n_plp, &plp) > 0)
@@ -235,7 +253,7 @@ void ld_dp(const char *in, const char *ctg, bool dup, const cgranges_t *cr, doub
 		else
 		{
 			i = cr_label(cr, b[0]);
-			dp[i] += n_plp;
+			(*dp)[i] += n_plp;
 			++cov[i];
 		}
 	}
@@ -243,7 +261,7 @@ void ld_dp(const char *in, const char *ctg, bool dup, const cgranges_t *cr, doub
 		free(b);
 	for (i = 0; i < cr->n_r; ++i)
 		if (cov[i])
-			dp[i] /= cov[i];
+			(*dp)[i] /= cov[i];
 	free(cov);
 	bam_hdr_destroy(data->hdr);
 	if (data->fp)

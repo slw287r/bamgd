@@ -13,7 +13,7 @@
 
 typedef struct
 {
-	double xmin, xmax, ymin, ymax, zmin, zmax;
+	double xmin, xmax, ymin, ymax;
 } dm_t;
 
 // Bivariate KDE function

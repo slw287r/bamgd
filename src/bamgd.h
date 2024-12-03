@@ -25,6 +25,7 @@
 #include "ketopt.h"
 #include "khashl.h"
 #include "cgranges.h"
+#include "thpool.h"
 #include "kde.h"
 #include "version.h"
 
@@ -81,6 +82,15 @@ static ko_longopt_t long_options[] = {
 	{ NULL, 0, 0 }
 };
 
+typedef struct
+{
+	char *in;
+	char *ctg;
+	bool dedup;
+	cgranges_t *cr;
+	double **dep;
+} op_t;
+
 typedef struct // auxiliary data structure
 {
 	samFile *fp;     // the file handle
@@ -100,7 +110,7 @@ void prs_arg(int argc, char **argv, arg_t *arg);
 void ld_cr(const faidx_t *fai, const char *ctg, cgranges_t *cr);
 double seq_gc(const char *seq);
 void cr_gc(const cgranges_t *cr, const faidx_t *fai, double *gc);
-void ld_dp(const char *in, const char *ctg, bool dup, const cgranges_t *cr, double *dp);
+void ld_dp(void *op);
 void draw_axis(cairo_t *cr, uint32_t md, const char *ctg, uint32_t n_targets,
 		uint64_t gl);
 int is_gzip(const char *fn);
