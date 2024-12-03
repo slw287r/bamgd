@@ -286,7 +286,7 @@ void draw_ylab(cairo_t *cr, const char *lab, bool log, double x, double canvas_h
 void draw_legend(cairo_t *cr, int width, int margin)
 {
 	cairo_save(cr);
-	cairo_set_font_size(cr, 12);
+	cairo_set_font_size(cr, 13);
 	cairo_text_extents_t ext;
 	cairo_text_extents(cr, "x", &ext);
 	cairo_set_line_width(cr, 0.5);
@@ -296,7 +296,7 @@ void draw_legend(cairo_t *cr, int width, int margin)
 	cairo_stroke_preserve(cr);
 	cairo_set_source_rgb(cr, 219 / 255.0, 78 / 255.0, 78 / 255.0);
 	cairo_fill(cr);
-	cairo_move_to(cr, ext.width * 1.5, ext.height);
+	cairo_move_to(cr, ext.width * 1.6, ext.height);
 	cairo_set_source_rgb(cr, 0, 0, 0);
 	cairo_show_text(cr, "w/ dup");
 	cairo_set_source_rgba(cr, 70 / 255.0, 130 / 255.0, 180 / 255.0, 0.3);
@@ -304,7 +304,7 @@ void draw_legend(cairo_t *cr, int width, int margin)
 	cairo_stroke_preserve(cr);
 	cairo_set_source_rgb(cr, 70 / 255.0, 130 / 255.0, 180 / 255.0);
 	cairo_fill(cr);
-	cairo_move_to(cr, ext.width * 1.5, ext.height * 3);
+	cairo_move_to(cr, ext.width * 1.6, ext.height * 3);
 	cairo_set_source_rgb(cr, 0, 0, 0);
 	cairo_show_text(cr, "w/o dup");
 	cairo_restore(cr);
@@ -374,8 +374,8 @@ void kde_plot(double *x, double *y, double *z, int n, const dm_t *dm, bool log,
 	// draw_axes(cr, width, height);
 	if (z)
 	{
-		draw_contours(cr, kde_xz, 1, grid_size, width, height, n_level);
 		draw_contours(cr, kde_xy, 2, grid_size, width, height, n_level);
+		draw_contours(cr, kde_xz, 1, grid_size, width, height, n_level);
 	}
 	else
 		draw_contours(cr, kde_xy, 0, grid_size, width, height, n_level);
