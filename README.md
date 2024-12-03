@@ -20,3 +20,6 @@ Dup-ed and dedup-ed depth via `-ld` or `--log --dup` | Plot given chromosome or 
 :-------------------------:|:-------------------------:
 <img src="https://github.com/user-attachments/assets/3af7ef00-519a-4721-a322-edb2e348edd5" width=512></img> |<img src="https://github.com/user-attachments/assets/026e68b3-6e23-4009-9548-c55ddb624feb" width=512></img>
 
+## Note
+
+Please use the Linux x86-64 static build in the bin folder and apply `chmod +x bamgd`
