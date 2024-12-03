@@ -6,11 +6,15 @@
 ```
 ## Demo
 
-* Normal depth
+* Normal depth with dups
 
 <img src="https://github.com/user-attachments/assets/6fd8f188-2476-47b4-8305-8cab621c16cf" width=512></img>
 
-* Ultra high depth
+* Normal depth dup-ed and dedup-ed via `-d` or `--dup`
+
+<img src="https://github.com/user-attachments/assets/1ce990b1-8e53-4dcd-9256-b6685559fc1d" width=512></img>
+
+* Ultra-deepp depth
 
 <img src="https://github.com/user-attachments/assets/41e0a3aa-12a7-4779-914e-891fe32ff028" width=512></img>
 
