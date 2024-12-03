@@ -42,7 +42,7 @@ void draw_right_ticks(cairo_t *cr, double *grid_x, double *grid_y, int grid_size
 		int width, int height, int margin);
 // Draw axes for the main bivariate plot
 void draw_axes(cairo_t *cr, int width, int height);
-void draw_ylab(cairo_t *cr, const char *lab, double x, double canvas_height);
+void draw_ylab(cairo_t *cr, const char *lab, bool log, double x, double canvas_height);
 void draw_legend(cairo_t *cr, int width, int margin);
 void kde_plot(double *x, double *y, double *z, int n, const dm_t *dm, bool log,
 		const char *png);

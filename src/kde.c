@@ -68,11 +68,11 @@ void draw_filled_kde(cairo_t *cr, double *kde, int col, double *grid, int grid_s
 {
 	int i;
 	if (col == 0)
-		cairo_set_source_rgba(cr, 199 / 255.0, 219 / 255.0, 217 / 255.0, 0.6);
+		cairo_set_source_rgba(cr, 199 / 255.0, 219 / 255.0, 217 / 255.0, 0.6); // grey
 	else if (col == 1)
-		cairo_set_source_rgba(cr, 70 / 255.0, 130 / 255.0, 180 / 255.0, 0.3);
+		cairo_set_source_rgba(cr, 70 / 255.0, 130 / 255.0, 180 / 255.0, 0.3); // blue
 	else
-		cairo_set_source_rgba(cr, 219 / 255.0, 78 / 255.0, 78 / 255.0, 0.3);
+		cairo_set_source_rgba(cr, 219 / 255.0, 78 / 255.0, 78 / 255.0, 0.3); // red
 	cairo_move_to(cr, 0, height); // Start at the base of the plot
 	for (i = 0; i < grid_size; ++i)
 	{
@@ -84,11 +84,11 @@ void draw_filled_kde(cairo_t *cr, double *kde, int col, double *grid, int grid_s
 	cairo_close_path(cr);
 	cairo_fill(cr);
 	if (col == 0)
-		cairo_set_source_rgb(cr, 101 / 255.0, 175 / 255.0, 144 / 255.0);
+		cairo_set_source_rgb(cr, 101 / 255.0, 175 / 255.0, 144 / 255.0); // grey
 	else if (col == 1)
-		cairo_set_source_rgb(cr, 70 / 255.0, 130 / 255.0, 180 / 255.0);
+		cairo_set_source_rgb(cr, 70 / 255.0, 130 / 255.0, 180 / 255.0); // blue
 	else
-		cairo_set_source_rgb(cr, 219 / 255.0, 78 / 255.0, 78 / 255.0);
+		cairo_set_source_rgb(cr, 219 / 255.0, 78 / 255.0, 78 / 255.0); // red
 	cairo_move_to(cr, 0, (1 - kde[1] * 0.9) * height);
 	for (i = 1; i < grid_size; ++i)
 	{
@@ -110,11 +110,11 @@ void draw_contours(cairo_t *cr, double *kde, int col, int grid_size, int width,
 	{
 		double threshold = (double)level / n_level;
 		if (col == 0)
-			cairo_set_source_rgba(cr, 9 / 255.0, 15 / 255.0, 13 / 255.0, 0.1 * level);
+			cairo_set_source_rgba(cr, 9 / 255.0, 15 / 255.0, 13 / 255.0, 0.1 * level); // grey
 		else if (col == 1)
-			cairo_set_source_rgba(cr, 70 / 255.0, 130 / 255.0, 180 / 255.0, 0.1 * level);
+			cairo_set_source_rgba(cr, 70 / 255.0, 130 / 255.0, 180 / 255.0, 0.1 * level); // blue
 		else
-			cairo_set_source_rgba(cr, 219 / 255.0, 78 / 255.0, 78 / 255.0, 0.1 * level);
+			cairo_set_source_rgba(cr, 219 / 255.0, 78 / 255.0, 78 / 255.0, 0.1 * level); // red
 		for (i = 0; i < grid_size; ++i)
 		{
 			for (j = 0; j < grid_size; ++j)
@@ -259,7 +259,7 @@ void draw_axes(cairo_t *cr, int width, int height)
 	cairo_stroke(cr);
 }
 
-void draw_ylab(cairo_t *cr, const char *lab, double x, double canvas_height)
+void draw_ylab(cairo_t *cr, const char *lab, bool log, double x, double canvas_height)
 {
 	cairo_set_font_size(cr, 20.0);
 	cairo_select_font_face(cr, "Sans", CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_BOLD);
@@ -273,6 +273,10 @@ void draw_ylab(cairo_t *cr, const char *lab, double x, double canvas_height)
 	cairo_rotate(cr, -M_PI / 2.0);
 	cairo_move_to(cr, 0, 0);
 	cairo_show_text(cr, lab);
+	cairo_stroke(cr);
+	cairo_set_font_size(cr, 10.0);
+	cairo_move_to(cr, ext.width * 0.775, ext.height / 3);
+	cairo_show_text(cr, "10");
 	cairo_restore(cr);
 }
 
@@ -341,8 +345,8 @@ void kde_plot(double *x, double *y, double *z, int n, const dm_t *dm, bool log,
 	univ_kde(y, n, grid_y, grid_size, kde_y, BANDWIDTH_Y, false);
 	if (z)
 	{
-		biv_kde(x, z, n, grid_x, grid_z, grid_size, kde_xz);
-		univ_kde(z, n, grid_z, grid_size, kde_z, BANDWIDTH_Y, false);
+		biv_kde(x, z, n, grid_x, grid_y, grid_size, kde_xz);
+		univ_kde(z, n, grid_y, grid_size, kde_z, BANDWIDTH_Y, false);
 	}
 	// Normalize for visualization
 	double min_val, max_val;
@@ -380,8 +384,8 @@ void kde_plot(double *x, double *y, double *z, int n, const dm_t *dm, bool log,
 	// draw_axes(cr, width, height);
 	if (z)
 	{
-		draw_contours(cr, kde_xz, 2, grid_size, width, height, n_level);
-		draw_contours(cr, kde_xy, 1, grid_size, width, height, n_level);
+		draw_contours(cr, kde_xz, 1, grid_size, width, height, n_level);
+		draw_contours(cr, kde_xy, 2, grid_size, width, height, n_level);
 	}
 	else
 		draw_contours(cr, kde_xy, 0, grid_size, width, height, n_level);
@@ -416,15 +420,15 @@ void kde_plot(double *x, double *y, double *z, int n, const dm_t *dm, bool log,
 	cairo_rotate(cr, M_PI / 2);
 	if (z)
 	{
-		draw_filled_kde(cr, kde_y, 1, grid_y, grid_size, height, margin * 0.95);
-		draw_filled_kde(cr, kde_z, 2, grid_z, grid_size, height, margin * 0.95);
+		draw_filled_kde(cr, kde_y, 2, grid_y, grid_size, height, margin * 0.95);
+		draw_filled_kde(cr, kde_z, 1, grid_y, grid_size, height, margin * 0.95);
 	}
 	else
 		draw_filled_kde(cr, kde_y, 0, grid_y, grid_size, height, margin * 0.95);
 	cairo_restore(cr);
 	// axis labels
 	cairo_text_extents_t ext;
-	char *xlab = "GC (%)", *ylab = log ? "Depth (log₁₀×)" : "Depth (×)";
+	char *xlab = "GC (%)", *ylab = log ? "Depth (log  ×)" : "Depth (×)";
 	cairo_set_font_size(cr, 20.0);
 	cairo_select_font_face(cr, "Sans", CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_BOLD);
 	cairo_text_extents(cr, xlab, &ext);
@@ -432,7 +436,7 @@ void kde_plot(double *x, double *y, double *z, int n, const dm_t *dm, bool log,
 			height + margin * 2 - ext.height * 0.6);
 	cairo_show_text(cr, xlab);
 	cairo_stroke(cr);
-	draw_ylab(cr, ylab, margin / 2.0, height + margin * 2);
+	draw_ylab(cr, ylab, log, margin / 2.0, height + margin * 2);
 	cairo_surface_write_to_png(surface, png);
 	cairo_destroy(cr);
 	cairo_surface_destroy(surface);
