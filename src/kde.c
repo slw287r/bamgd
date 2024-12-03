@@ -274,21 +274,24 @@ void draw_ylab(cairo_t *cr, const char *lab, bool log, double x, double canvas_h
 	cairo_move_to(cr, 0, 0);
 	cairo_show_text(cr, lab);
 	cairo_stroke(cr);
-	cairo_set_font_size(cr, 10.0);
-	cairo_move_to(cr, ext.width * 0.775, ext.height / 3);
-	cairo_show_text(cr, "10");
-	cairo_restore(cr);
+	if (log)
+	{
+		cairo_set_font_size(cr, 10.0);
+		cairo_move_to(cr, ext.width * 0.775, ext.height / 3);
+		cairo_show_text(cr, "10");
+		cairo_restore(cr);
+	}
 }
 
 void draw_legend(cairo_t *cr, int width, int margin)
 {
 	cairo_save(cr);
-	cairo_set_font_size(cr, 15);
+	cairo_set_font_size(cr, 12);
 	cairo_text_extents_t ext;
 	cairo_text_extents(cr, "x", &ext);
 	cairo_set_line_width(cr, 0.5);
 	cairo_set_source_rgba(cr, 219 / 255.0, 78 / 255.0, 78 / 255.0, 0.3);
-	cairo_translate(cr, margin + width + ext.width / 2, ext.height * 3);
+	cairo_translate(cr, margin + width + ext.width / 2, ext.height * 3.5);
 	cairo_rectangle(cr, 0, 0, ext.width, ext.height);
 	cairo_stroke_preserve(cr);
 	cairo_set_source_rgb(cr, 219 / 255.0, 78 / 255.0, 78 / 255.0);
