@@ -552,7 +552,7 @@ void horiz(int n, bool bold)
 
 void usage()
 {
-	int w = 58;
+	int w = 60;
 	horiz(w, true);
 	char title[] = "\e[1mPlot genome GC vs sequencing depth in bam\e[0m";
 	int title_len = strlen_wo_esc(title);
