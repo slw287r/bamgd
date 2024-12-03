@@ -19,5 +19,6 @@
 
 <img src="https://github.com/user-attachments/assets/32437c90-4f37-40c5-9bd9-fee6c4d744a8" width=512></img>
 
-* Ultra high depth logscaled with dup and nondup depth via `-ld` or `--log --dup`
+* Ultra high depth logscaled with dup-ed and dedup-ed depth via `-ld` or `--log --dup`
 
+<img src="https://github.com/user-attachments/assets/3af7ef00-519a-4721-a322-edb2e348edd5" width=512></img>
